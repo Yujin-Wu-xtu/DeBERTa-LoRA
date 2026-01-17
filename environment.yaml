@@ -1,0 +1,37 @@
+name: stego_env
+channels:
+  - pytorch
+  - nvidia
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    # --- Core Deep Learning Framework ---
+    - torch>=2.5.1
+    - torchvision
+    - torchaudio
+    - accelerate>=0.33.0  # Required for mixed precision and multi-GPU training
+
+    # --- Transformers & PEFT (Core for DeBERTa-LoRA) ---
+    - transformers==4.44.2
+    - peft==0.13.2        # Core library for LoRA implementation
+    - tokenizers
+    - sentencepiece
+    - datasets            # HuggingFace datasets library
+    - evaluate            # For computing metrics
+
+    # --- Data Processing (Steganalysis Specific) ---
+    - numpy
+    - pandas              # Essential for handling CSV datasets
+    - openpyxl            # For reading/writing Excel files
+    - scikit-learn        # For calculating Accuracy, F1-score, Precision, Recall
+    - tqdm                # Progress bar for loops
+    - clean-text          # For cleaning raw text (e.g., Social media data)
+    - emoji               # Handling emojis in Social text datasets
+
+    # --- Utilities ---
+    - pyyaml              # For parsing .yaml configuration files
+    - tensorboardx        # For logging training curves
+    - protobuf
+    - click
