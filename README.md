@@ -1,44 +1,81 @@
-# Efficient Yet Effective: DeBERTa-LoRA for Linguistic Steganalysis
+Efficient Yet Effective: DeBERTa-LoRA for Linguistic Steganalysis
 
-This repository contains the official PyTorch implementation for the paper **"Efficient Yet Effective: DeBERTa-LoRA for Linguistic Steganalysis"**, submitted to **ICME 2026**.
+Note: This repository contains the official PyTorch implementation for the paper "Efficient Yet Effective: DeBERTa-LoRA for Linguistic Steganalysis", submitted to ICME 2026.
 
-## 🚀 Overview
+🔒 Anonymous Submission: Identifying information has been removed for double-blind review.
 
-In this work, we propose an efficient steganalysis framework that synergizes the **DeBERTa-v3** architecture with **Low-Rank Adaptation (LoRA)**. By prioritizing architectural alignment over model scaling, we achieve state-of-the-art detection performance while significantly reducing computational costs.
+📖 Overview
 
-### Key Features:
-- **Architectural Alignment:** Leverages DeBERTa's *Replaced Token Detection (RTD)* to detect distributional sampling artifacts and *Disentangled Attention (DA)* for structural misalignments.
-- **Differential Feature Amplifier (DFA):** We theoretically model LoRA as a high-pass filter that amplifies subtle steganographic signals over a frozen semantic backbone.
-- **High Efficiency:** Compared to LLM-based methods (e.g., GS-Llama7b), our method reduces training time by **~7x** and GPU memory usage by **50%**, making it feasible for single-GPU deployment (e.g., RTX 4090).
+The rapid development of Large Language Models (LLMs) has transformed generative linguistic steganography into a critical cybersecurity threat. To address this, we propose DeBERTa-LoRA, a framework that synergizes the DeBERTa-v3 architecture with Low-Rank Adaptation (LoRA).
 
-## 📊 Performance
+Unlike methods relying on massive model scaling, our approach prioritizes architectural alignment:
 
-Our model achieves State-of-the-Art (SOTA) performance across multiple steganographic algorithms (**AC, Discop, VAE-Stega**) and domains (**Movie, News, Twitter**).
+Replaced Token Detection (RTD): Intrinsically discriminates distributional sampling artifacts ($\phi_{dist}$) introduced by truncation strategies.
 
-| Method | Avg. Accuracy | Param Efficiency |
-| :--- | :---: | :---: |
-| TS-RNN | 76.5% | - |
-| GS-Llama7b | 90.5% | Low |
-| **DeBERTa-LoRA (Ours)** | **94.8%** | **High** |
+Disentangled Attention (DA): Effectively captures structural content-position misalignments ($\phi_{struct}$) caused by embedding constraints.
 
-## 🛠️ Requirements
+Differential Feature Amplifier (DFA): We theoretically model LoRA as a high-pass filter that explicitly isolates and amplifies subtle steganographic signals over a frozen semantic backbone.
 
-The code is built with Python 3.8+ and PyTorch. Key dependencies include:
-* `torch>=2.0.0`
-* `transformers>=4.30.0`
-* `peft>=0.4.0`
-* `nltk`
-* `datasets`
+Key Result: Our method achieves State-of-the-Art (SOTA) performance while reducing training time by ~7x and peak GPU memory by 50% compared to LLM-based baselines (e.g., GS-Llama7b).
 
-*(Detailed `requirements.txt` will be released soon.)*
+📂 Project Structure
 
-## 📂 Project Structure
+DeBERTa-LoRA/
+├── data/                  # Dataset directory
+│   ├── ac/                # Example: data/ac/news/cover.txt
+│   ├── di/                # Discop algorithm datasets
+│   └── vs/                # VAE-Stega algorithm datasets
+├── src/                   # Source code
+│   ├── train.py           # Main training script (DeBERTa + LoRA)
+│   ├── test.py            # Evaluation script
+├── requirements.txt       # Python dependencies
+└── README.md              # Project documentation
 
-```text
-.
-├── data/               # Dataset preprocessing scripts
-├── models/             # DeBERTa-v3 and LoRA configurations
-├── utils/              # Helper functions and metrics
-├── train.py            # Main training script
-├── evaluate.py         # Evaluation and testing script
-└── README.md
+
+⚡ Quick Start
+
+1. Installation
+
+We recommend using a Conda environment with Python 3.8+.
+
+# Install dependencies
+pip install -r requirements.txt
+
+
+2. Data Preparation
+
+Ensure your dataset is organized in the data/ directory. Each file should contain one text sample per line.
+
+Directory Layout: data/{algorithm}/{domain}/
+
+Required Files: cover.txt and stego.txt
+
+3. Training
+
+Run the training script to fine-tune the model. The script automatically selects the best available GPU.
+
+python src/train.py
+
+
+Configuration: You can adjust hyperparameters (Batch Size, LR, Epochs) and dataset paths directly in the CONFIG dictionary within src/train.py. The model defaults to microsoft/deberta-v3-large.
+
+4. Evaluation
+
+To evaluate the trained model using the best checkpoint:
+
+python src/test.py
+
+
+📜 Citation
+
+If you find this code useful for your research, please consider citing our paper:
+
+@inproceedings{DeBERTaLoRA_ICME2026,
+  title={Efficient Yet Effective: DeBERTa-LoRA for Linguistic Steganalysis},
+  author={Anonymous Authors},
+  booktitle={IEEE International Conference on Multimedia and Expo (ICME)},
+  year={2026}
+}
+
+
+For any questions regarding the code or paper, please open an anonymous issue in this repository.
