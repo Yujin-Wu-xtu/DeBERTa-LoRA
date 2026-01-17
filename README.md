@@ -38,7 +38,6 @@ DeBERTa-LoRA/
 
 We recommend using a Conda environment with Python 3.8+.
 
-# Install dependencies
 pip install -r requirements.txt
 
 
