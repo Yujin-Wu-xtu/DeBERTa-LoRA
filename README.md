@@ -127,11 +127,11 @@ Each CSV file contains text samples and binary labels:
 1 → stego text
 ⚙️ Installation
 
-We recommend using Python 3.8+ and a clean virtual environment.
+We highly recommend using Conda to manage a clean virtual environment. You can easily set it up using the provided `environment.yaml` file:
 
-pip install -r requirements.txt
-
-If you prefer Conda, you may also use the provided environment.yaml.
+```bash
+conda env create -f environment.yaml
+conda activate your_env_name
 
 🏋️ Training
 
