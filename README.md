@@ -18,11 +18,11 @@
 This repository provides:
 
 - the **official implementation** of **DeBERTa-LoRA** for linguistic steganalysis
-- the **experimental datasets** used in our study
+- the **processed experimental datasets** used in our study
 
-Recent advances in Large Language Models (LLMs) have significantly improved the quality of generative linguistic steganography, making hidden information more natural and difficult to detect. To address this challenge, we propose **DeBERTa-LoRA**, an efficient yet effective framework that combines the **DeBERTa-v3** backbone with **Low-Rank Adaptation (LoRA)** for high-performance linguistic steganalysis.
+Recent advances in Large Language Models (LLMs) have greatly improved the quality of generative linguistic steganography, making hidden information more natural and harder to detect. To address this challenge, we propose **DeBERTa-LoRA**, an efficient yet effective framework that combines **DeBERTa-v3** with **Low-Rank Adaptation (LoRA)** for high-performance linguistic steganalysis.
 
-Unlike LLM-based detection approaches that rely on large-scale generative models and expensive fine-tuning, our method emphasizes **architectural alignment** between the model and steganographic artifacts.
+Instead of relying on expensive large-scale generative models for detection, our method emphasizes **architectural alignment** between the backbone model and steganographic artifacts.
 
 ---
 
@@ -46,129 +46,162 @@ Together, these components make DeBERTa-LoRA both **accurate** and **computation
 Compared with leading LLM-based baselines, DeBERTa-LoRA achieves:
 
 - **State-of-the-art detection performance**
-- **~15× faster training**
-- **~70% lower peak GPU memory**
+- **Substantially faster training**
+- **Much lower GPU memory consumption**
 
-Our experiments cover multiple steganographic paradigms, including:
+Our experiments cover:
 
-- **AC** (Arithmetic Coding-based steganography)
-- **DI** (Discop-based steganography)
-- **VS** (VAE-Stega-based steganography)
-
-and multiple text domains:
-
+### Text domains
 - **Movie**
 - **News**
 - **Twitter**
 
+### Steganographic algorithms
+- **AC**
+- **DI**
+- **VS**
+
 ---
 
-## 📂 What This Repository Contains
+## 📂 Repository Scope
 
 This repository is intended to release:
 
 - our **proposed method**
-- our **processed experimental datasets**
+- our **processed datasets**
 
 It does **not** include re-implementations of all baseline methods.
 
-For baseline comparisons in the paper, we mainly used the **official open-source repositories** released by the original authors whenever available. Please refer to the corresponding papers or official repositories for those implementations.
+For baseline comparisons in the paper, we mainly used the **official open-source implementations** released by the original authors whenever available. This keeps the repository lightweight and easier to maintain.
 
 ---
 
-## 📁 Project Structure
+## 📁 Repository Structure
 
 ```text
 DeBERTa-LoRA/
-├── datasets/                   # Released datasets
-│   ├── AC/
-│   │   ├── Movie/
-│   │   ├── News/
-│   │   └── Twitter/
-│   ├── DI/
-│   │   ├── Movie/
-│   │   ├── News/
-│   │   └── Twitter/
-│   └── VS/
-│       ├── Movie/
-│       ├── News/
-│       └── Twitter/
+├── datasets/
+│   ├── Movie/
+│   │   ├── AC/
+│   │   │   ├── train.csv
+│   │   │   ├── dev.csv
+│   │   │   └── test.csv
+│   │   ├── DI/
+│   │   │   ├── train.csv
+│   │   │   ├── dev.csv
+│   │   │   └── test.csv
+│   │   └── VS/
+│   │       ├── train.csv
+│   │       ├── dev.csv
+│   │       └── test.csv
+│   ├── News/
+│   └── Twitter/
 │
-├── src/                        # Source code
-│   ├── train.py                # Training script
-│   ├── test.py                 # Evaluation script
-│   ├── model.py                # Model definition
-│   ├── dataset.py              # Data loading utilities
-│   └── utils.py                # Helper functions
-│
-├── checkpoints/                # Saved checkpoints (optional)
-├── requirements.txt            # Python dependencies
-└── README.md                   # Project documentation
-🗂 Dataset Format
+├── train.py
+├── test.py
+├── requirements.txt
+├── environment.yaml
+├── .gitignore
+└── README.md
+📁 Dataset Description
 
-Each dataset directory contains paired cover and stego texts.
+We release the final processed datasets used in our experiments.
+
+Domains
+Movie
+News
+Twitter
+Algorithms
+AC
+DI
+VS
+
+Each domain-algorithm pair contains three splits:
+
+train.csv
+dev.csv
+test.csv
+
+Each CSV file contains text samples and binary labels:
+
+0 → cover text
+1 → stego text
+⚙️ Installation
+
+We recommend using Python 3.8+ and a clean virtual environment.
+
+pip install -r requirements.txt
+
+If you prefer Conda, you may also use the provided environment.yaml.
+
+🏋️ Training
+
+Train a model on one domain and one algorithm:
+
+python train.py --train_domain Movie --algorithm AC
 
 Example:
 
-datasets/AC/News/
-├── train_cover.txt
-├── train_stego.txt
-├── test_cover.txt
-└── test_stego.txt
+python train.py --train_domain News --algorithm VS
 
-Each line in a file corresponds to one text sample.
+To enable cross-domain evaluation after training:
 
-If your released version uses another file organization format, please adjust this section accordingly.
-
-⚙️ Installation
-
-We recommend using Python 3.8+ with a clean virtual environment.
-
-pip install -r requirements.txt
-🏋️ Training
-
-Run the training script:
-
-python src/train.py
-
-You may modify key hyperparameters such as:
-
-model name
-batch size
-learning rate
-number of epochs
-dataset path
-LoRA rank / dropout
-
-depending on your experimental setting.
-
+python train.py --train_domain Twitter --algorithm DI --cross_domain
+Optional arguments
+python train.py \
+  --train_domain Movie \
+  --algorithm AC \
+  --model_name microsoft/deberta-v3-large \
+  --batch_size 4 \
+  --epochs 5 \
+  --learning_rate 5e-5 \
+  --output_dir outputs
+Quick smoke test
+python train.py \
+  --train_domain Movie \
+  --algorithm AC \
+  --max_train_samples 200 \
+  --max_dev_samples 100 \
+  --max_test_samples 100
 🧪 Evaluation
 
-To evaluate a trained checkpoint:
+Evaluate a saved checkpoint:
 
-python src/test.py
+python test.py \
+  --domain Movie \
+  --algorithm AC \
+  --checkpoint outputs/AC_Movie/best_model.pt
 
-Evaluation metrics typically include:
+Evaluate on another split:
 
-Accuracy
-Precision
-Recall
-F1-score
-📌 Notes on Baselines
+python test.py \
+  --domain News \
+  --algorithm VS \
+  --split dev \
+  --checkpoint outputs/VS_News/best_model.pt
+Test outputs
 
-This repository focuses on our method and our released datasets.
+The evaluation script saves:
 
-Baseline models compared in the paper are not bundled here, because most of them already have public implementations released by their original authors. This helps keep the repository lightweight, clean, and easier to maintain.
+metrics.json
+classification_report.txt
+test.log
 
+under the corresponding output directory.
+
+📌 Notes
+This repository focuses on our method and our datasets.
+Baseline implementations are not bundled here.
+For reproducibility, all data paths in the released scripts are relative paths, making the code directly runnable after cloning the repository.
 📚 Citation
 
 If you find this repository useful, please cite our paper:
 
-@article{debloRA_steganalysis,
+@article{deberta_lora_steganalysis,
   title={Efficient Yet Effective: DeBERTa-LoRA for Linguistic Steganalysis},
   author={...},
   journal={IEEE Signal Processing Letters},
   year={2026}
 }
 
-Please replace the citation information with the final published version after acceptance.
+Please replace the citation with the final published version after acceptance.
