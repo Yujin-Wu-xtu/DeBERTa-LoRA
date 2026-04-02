@@ -99,7 +99,6 @@ DeBERTa-LoRA/
 │
 ├── train.py
 ├── test.py
-├── requirements.txt
 ├── environment.yaml
 ├── .gitignore
 └── README.md
