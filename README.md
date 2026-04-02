@@ -2,82 +2,173 @@
 
 # Efficient Yet Effective: DeBERTa-LoRA for Linguistic Steganalysis
 
-**Official PyTorch Implementation** submitted to **ICME 2026**
+**Official PyTorch Implementation and Dataset Release**
 
-![Status](https://img.shields.io/badge/Status-Anonymous_Submission-orange)
 ![Framework](https://img.shields.io/badge/Framework-PyTorch-red)
+![Task](https://img.shields.io/badge/Task-Linguistic_Steganalysis-blue)
+![Model](https://img.shields.io/badge/Model-DeBERTa--LoRA-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 </div>
 
 ---
 
-> [!IMPORTANT]
-> **🔒 Anonymous Submission**
->
-> Identifying information has been removed for double-blind review. This repository contains the code for the paper *"Efficient Yet Effective: DeBERTa-LoRA for Linguistic Steganalysis"*.
+## 📖 Introduction
 
-## 📖 Overview
+This repository provides:
 
-The rapid development of **Large Language Models (LLMs)** has transformed generative linguistic steganography into a critical cybersecurity threat. To address this, we propose **DeBERTa-LoRA**, a framework that synergizes the DeBERTa-v3 architecture with Low-Rank Adaptation (LoRA).
+- the **official implementation** of **DeBERTa-LoRA** for linguistic steganalysis
+- the **experimental datasets** used in our study
 
-Unlike methods relying on massive model scaling, our approach prioritizes **architectural alignment**:
+Recent advances in Large Language Models (LLMs) have significantly improved the quality of generative linguistic steganography, making hidden information more natural and difficult to detect. To address this challenge, we propose **DeBERTa-LoRA**, an efficient yet effective framework that combines the **DeBERTa-v3** backbone with **Low-Rank Adaptation (LoRA)** for high-performance linguistic steganalysis.
 
-* **Replaced Token Detection (RTD)**
-    * Intrinsically discriminates distributional sampling artifacts ($\phi_{dist}$) introduced by truncation strategies.
-* **Disentangled Attention (DA)**
-    * Effectively captures structural content-position misalignments ($\phi_{struct}$) caused by embedding constraints.
-* **Differential Feature Amplifier (DFA)**
-    * We theoretically model LoRA as a **high-pass filter** that explicitly isolates and amplifies subtle steganographic signals over a frozen semantic backbone.
-
-### 🚀 Key Results
-Our method achieves **State-of-the-Art (SOTA)** performance while reducing:
-* **Training Time:** ~7x faster
-* **Peak GPU Memory:** 50% lower
-*(Compared to leading LLM-based baselines, e.g., GS-Llama7b)*
+Unlike LLM-based detection approaches that rely on large-scale generative models and expensive fine-tuning, our method emphasizes **architectural alignment** between the model and steganographic artifacts.
 
 ---
 
-## 📂 Project Structure
+## ✨ Method Highlights
+
+### 1. Replaced Token Detection (RTD)
+RTD is naturally sensitive to the **distributional artifacts** introduced by steganographic sampling strategies, such as truncation and constrained token selection.
+
+### 2. Disentangled Attention (DA)
+DA helps capture **structural content-position misalignments** caused by message embedding constraints, enabling the model to detect subtle contextual inconsistencies.
+
+### 3. LoRA as a Differential Feature Amplifier
+Rather than using LoRA only for efficient fine-tuning, we interpret it as a **Differential Feature Amplifier (DFA)** that enhances weak steganographic signals over a frozen semantic backbone.
+
+Together, these components make DeBERTa-LoRA both **accurate** and **computationally efficient** for practical deployment.
+
+---
+
+## 🚀 Main Results
+
+Compared with leading LLM-based baselines, DeBERTa-LoRA achieves:
+
+- **State-of-the-art detection performance**
+- **~15× faster training**
+- **~70% lower peak GPU memory**
+
+Our experiments cover multiple steganographic paradigms, including:
+
+- **AC** (Arithmetic Coding-based steganography)
+- **DI** (Discop-based steganography)
+- **VS** (VAE-Stega-based steganography)
+
+and multiple text domains:
+
+- **Movie**
+- **News**
+- **Twitter**
+
+---
+
+## 📂 What This Repository Contains
+
+This repository is intended to release:
+
+- our **proposed method**
+- our **processed experimental datasets**
+
+It does **not** include re-implementations of all baseline methods.
+
+For baseline comparisons in the paper, we mainly used the **official open-source repositories** released by the original authors whenever available. Please refer to the corresponding papers or official repositories for those implementations.
+
+---
+
+## 📁 Project Structure
 
 ```text
 DeBERTa-LoRA/
-├── data/                 # Dataset directory
-│   ├── ac/               # Example: data/ac/news/cover.txt
-│   ├── di/               # Discop algorithm datasets
-│   └── vs/               # VAE-Stega algorithm datasets
-├── src/                  # Source code
-│   ├── train.py          # Main training script (DeBERTa + LoRA)
-│   └── test.py           # Evaluation script
-├── requirements.txt      # Python dependencies
-└── README.md             # Project documentation
+├── datasets/                   # Released datasets
+│   ├── AC/
+│   │   ├── Movie/
+│   │   ├── News/
+│   │   └── Twitter/
+│   ├── DI/
+│   │   ├── Movie/
+│   │   ├── News/
+│   │   └── Twitter/
+│   └── VS/
+│       ├── Movie/
+│       ├── News/
+│       └── Twitter/
+│
+├── src/                        # Source code
+│   ├── train.py                # Training script
+│   ├── test.py                 # Evaluation script
+│   ├── model.py                # Model definition
+│   ├── dataset.py              # Data loading utilities
+│   └── utils.py                # Helper functions
+│
+├── checkpoints/                # Saved checkpoints (optional)
+├── requirements.txt            # Python dependencies
+└── README.md                   # Project documentation
+🗂 Dataset Format
 
-⚡ Quick Start
-1. Installation
-We recommend using a Conda environment with Python 3.8+.
+Each dataset directory contains paired cover and stego texts.
 
-Bash
+Example:
+
+datasets/AC/News/
+├── train_cover.txt
+├── train_stego.txt
+├── test_cover.txt
+└── test_stego.txt
+
+Each line in a file corresponds to one text sample.
+
+If your released version uses another file organization format, please adjust this section accordingly.
+
+⚙️ Installation
+
+We recommend using Python 3.8+ with a clean virtual environment.
 
 pip install -r requirements.txt
-2. Data Preparation
-Ensure your dataset is organized in the data/ directory. Each file should contain one text sample per line.
+🏋️ Training
 
-Directory Layout: data/{algorithm}/{domain}/
-
-Required Files: cover.txt and stego.txt
-
-3. Training
-Run the training script to fine-tune the model. The script automatically selects the best available GPU.
-
-Bash
+Run the training script:
 
 python src/train.py
-Configuration: You can adjust hyperparameters (Batch Size, LR, Epochs) and dataset paths directly in the CONFIG dictionary within src/train.py. The model defaults to microsoft/deberta-v3-large.
 
-4. Evaluation
-To evaluate the trained model using the best checkpoint:
+You may modify key hyperparameters such as:
 
-Bash
+model name
+batch size
+learning rate
+number of epochs
+dataset path
+LoRA rank / dropout
+
+depending on your experimental setting.
+
+🧪 Evaluation
+
+To evaluate a trained checkpoint:
 
 python src/test.py
-For any questions regarding the code or paper, please open an anonymous issue in this repository.
+
+Evaluation metrics typically include:
+
+Accuracy
+Precision
+Recall
+F1-score
+📌 Notes on Baselines
+
+This repository focuses on our method and our released datasets.
+
+Baseline models compared in the paper are not bundled here, because most of them already have public implementations released by their original authors. This helps keep the repository lightweight, clean, and easier to maintain.
+
+📚 Citation
+
+If you find this repository useful, please cite our paper:
+
+@article{debloRA_steganalysis,
+  title={Efficient Yet Effective: DeBERTa-LoRA for Linguistic Steganalysis},
+  author={...},
+  journal={IEEE Signal Processing Letters},
+  year={2026}
+}
+
+Please replace the citation information with the final published version after acceptance.
