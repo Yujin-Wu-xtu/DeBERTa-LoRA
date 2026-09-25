@@ -1,206 +1,218 @@
-<div align="center">
+# Task-Aligned Discriminative Encoders for Efficient Linguistic Steganalysis
 
-# Efficient Yet Effective: DeBERTa-LoRA for Linguistic Steganalysis
+**Yanchun Li, Yujin Wu, Ming Yang, Hangtao Zhang, Dongsu Shen, and Li Zeng**
 
-**Official PyTorch Implementation and Dataset Release**
+**Submitted to ICASSP 2027.** This repository provides the PyTorch implementation and processed datasets accompanying the submitted manuscript. The implementation retains the name **DeBERTa-LoRA**.
 
-![Framework](https://img.shields.io/badge/Framework-PyTorch-red)
-![Task](https://img.shields.io/badge/Task-Linguistic_Steganalysis-blue)
-![Model](https://img.shields.io/badge/Model-DeBERTa--LoRA-orange)
-![License](https://img.shields.io/badge/License-MIT-green)
+## Overview
 
-</div>
+Does reliable linguistic steganalysis inherently require large-scale language models? We revisit this question from a **task-model alignment** perspective. Secret-message constraints can introduce weak deviations in token distributions and contextual dependencies, even when generated text remains fluent. Discriminatively pretrained encoders provide representation priors that may be well suited to detecting these traces.
 
----
+We instantiate this perspective with **DeBERTa-v3**, freeze its pretrained backbone, and train **LoRA adapters and a lightweight sequence classifier**. Experiments on three text domains and three steganography algorithms show strong detection and generalization with substantially lower computational cost than a representative 7B LLM detector.
 
-## 📖 Introduction
+## Method
 
-This repository provides:
+1. **Task-aligned discriminative representations.** DeBERTa-v3's Replaced Token Detection (RTD) pretraining learns to distinguish original tokens from contextually plausible replacements. This motivates its use as a representation prior for weak distributional deviations. RTD is not re-optimized during downstream steganalysis.
+2. **Content-position dependency modeling.** Disentangled Attention (DA) separately represents token content and relative position, providing a complementary inductive bias for contextual deviations introduced by constrained generation. RTD and DA are existing pretrained properties, not new steganalysis-specific modules.
+3. **Parameter-efficient adaptation.** The pretrained backbone remains frozen while low-rank updates and the classification head are optimized for cover/stego prediction. LoRA constrains the adaptation space while retaining the pretrained representation prior.
 
-- the **official implementation** of **DeBERTa-LoRA** for linguistic steganalysis
-- the **processed experimental datasets** used in our study
+The paper's central contribution is the investigation of task-model alignment for efficient linguistic steganalysis. Supporting ablations examine the relevance of discriminative pretraining and content-position modeling, while comparisons with full fine-tuning assess the effectiveness of LoRA adaptation.
 
-Recent advances in Large Language Models (LLMs) have greatly improved the quality of generative linguistic steganography, making hidden information more natural and harder to detect. To address this challenge, we propose **DeBERTa-LoRA**, an efficient yet effective framework that combines **DeBERTa-v3** with **Low-Rank Adaptation (LoRA)** for high-performance linguistic steganalysis.
+## Results reported in the submitted manuscript
 
-Instead of relying on expensive large-scale generative models for detection, our method emphasizes **architectural alignment** between the backbone model and steganographic artifacts.
+ACC and F1 values below are percentages. Improvements are absolute percentage points. These are the manuscript's reported results, not measurements from a new run of this repository.
 
----
+### In-domain detection
 
-## ✨ Method Highlights
+Our detector ranks first in **8 of 9** domain–algorithm settings and second on AC–Twitter among the compared methods.
 
-### 1. Replaced Token Detection (RTD)
-RTD is naturally sensitive to the **distributional artifacts** introduced by steganographic sampling strategies, such as truncation and constrained token selection.
+| Algorithm | Domain | GS-Llama7b ACC | GS-Llama7b F1 | Ours ACC | Ours F1 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| AC | Movie | 85.45 | 85.27 | 87.50 | 87.39 |
+| AC | News | 88.50 | 87.67 | 91.75 | 91.75 |
+| AC | Twitter | 83.75 | 83.87 | 83.15 | 82.75 |
+| DI | Movie | 90.75 | 90.81 | 91.16 | 91.20 |
+| DI | News | 94.75 | 94.76 | 95.83 | 95.83 |
+| DI | Twitter | 85.50 | 85.50 | 90.00 | 90.13 |
+| VS | Movie | 84.20 | 85.23 | 93.55 | 93.54 |
+| VS | News | 87.90 | 87.78 | 90.65 | 90.76 |
+| VS | Twitter | 80.25 | 80.29 | 85.55 | 86.08 |
+| **Average** | | **86.78** | **86.80** | **89.90** | **89.94** |
 
-### 2. Disentangled Attention (DA)
-DA helps capture **structural content-position misalignments** caused by message embedding constraints, enabling the model to detect subtle contextual inconsistencies.
+The average gains over GS-Llama7b are **3.12 points in ACC** and **3.14 points in F1**. Table 1 of the manuscript also compares TS-RNN, TS-FCN, TS-CSW, EILGF, LSTMATT, and directly comparable published STLC-KG results.
 
-### 3. LoRA as a Differential Feature Amplifier
-Rather than using LoRA only for efficient fine-tuning, we interpret it as a **Differential Feature Amplifier (DFA)** that enhances weak steganographic signals over a frozen semantic backbone.
+### Generalization under distribution shift
 
-Together, these components make DeBERTa-LoRA both **accurate** and **computationally efficient** for practical deployment.
+Cross-domain results average all six domain-transfer directions for each algorithm. Cross-steganography results average all six unseen-algorithm transfers on **News**.
 
----
+| Evaluation | GS-Llama7b ACC | GS-Llama7b F1 | Ours ACC | Ours F1 | ACC gain |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Cross-domain: AC | 60.54 | 59.10 | 69.20 | 66.45 | +8.66 |
+| Cross-domain: DI | 62.54 | 62.59 | 74.58 | 72.76 | +12.04 |
+| Cross-domain: VS | 80.42 | 80.43 | 83.51 | 83.37 | +3.09 |
+| **Cross-domain: overall** | **67.83** | **67.37** | **75.76** | **74.19** | **+7.93** |
+| **Cross-steganography: News** | **60.63** | **60.28** | **74.88** | **74.33** | **+14.25** |
 
-## 🚀 Main Results
+### Computational efficiency
 
-Compared with leading LLM-based baselines, DeBERTa-LoRA achieves:
+Measurements reported on a single **NVIDIA RTX 4090**:
 
-- **State-of-the-art detection performance**
-- **Substantially faster training**
-- **Much lower GPU memory consumption**
+| Model | Batch size | Training time (min) ↓ | Peak GPU memory (GB) ↓ |
+| --- | ---: | ---: | ---: |
+| Ours | 4 | 25.35 | 3.04 |
+| Ours | 32 | 4.10 | 5.05 |
+| GS-Llama7b | 4 | 61.73 | 11.84 |
 
-Our experiments cover:
+At the matched batch size of 4, our detector trains approximately **2.4× faster** and uses **74% less peak GPU memory** than GS-Llama7b.
 
-### Text domains
-- **Movie**
-- **News**
-- **Twitter**
+## Datasets
 
-### Steganographic algorithms
-- **AC**
-- **DI**
-- **VS**
+The released data cover **Movie**, **News**, and **Twitter**, each with three steganography algorithms:
 
----
+| Directory | Steganography algorithm |
+| --- | --- |
+| `AC` | Arithmetic Coding |
+| `DI` | Discop |
+| `VS` | VAE-Stega |
 
-## 📂 Repository Scope
+Each domain–algorithm pair contains an independent balanced dataset:
 
-This repository is intended to release:
+| Split | File | Total samples | Cover | Stego |
+| --- | --- | ---: | ---: | ---: |
+| Training | `train.csv` | 10,000 | 5,000 | 5,000 |
+| Validation | `dev.csv` | 1,000 | 500 | 500 |
+| Test | `test.csv` | 2,000 | 1,000 | 1,000 |
 
-- our **proposed method**
-- our **processed datasets**
+CSV files contain `sentence` and `label` columns; their order can vary. Labels are **0 = cover** and **1 = stego**. The manuscript uses steganographic samples with mixed embedding rates from **1 to 5 bits per word (bpw)**.
 
-It does **not** include re-implementations of all baseline methods.
-
-For baseline comparisons in the paper, we mainly used the **official open-source implementations** released by the original authors whenever available. This keeps the repository lightweight and easier to maintain.
-
----
-
-## 📁 Repository Structure
+## Repository structure
 
 ```text
 DeBERTa-LoRA/
 ├── datasets/
 │   ├── Movie/
-│   │   ├── AC/
-│   │   │   ├── train.csv
-│   │   │   ├── dev.csv
-│   │   │   └── test.csv
-│   │   ├── DI/
-│   │   │   ├── train.csv
-│   │   │   ├── dev.csv
-│   │   │   └── test.csv
-│   │   └── VS/
-│   │       ├── train.csv
-│   │       ├── dev.csv
-│   │       └── test.csv
-│   ├── News/
-│   └── Twitter/
-│
+│   │   ├── AC/                 # train.csv, dev.csv, test.csv
+│   │   ├── DI/                 # train.csv, dev.csv, test.csv
+│   │   └── VS/                 # train.csv, dev.csv, test.csv
+│   ├── News/                   # Same algorithm/split structure
+│   └── Twitter/                # Same algorithm/split structure
 ├── train.py
 ├── test.py
 ├── environment.yaml
-├── .gitignore
 └── README.md
-📁 Dataset Description
+```
 
-We release the final processed datasets used in our experiments.
+This repository releases our detector and processed datasets. Baseline implementations are not bundled. The paper evaluates TS-RNN, TS-FCN, TS-CSW, EILGF, LSTMATT, and GS-Llama7b using their public implementations or configurations; STLC-KG comparisons use only directly comparable published results.
 
-Domains
-Movie
-News
-Twitter
-Algorithms
-AC
-DI
-VS
-
-Each domain-algorithm pair contains three splits:
-
-train.csv
-dev.csv
-test.csv
-
-Each CSV file contains text samples and binary labels:
-
-0 → cover text
-1 → stego text
-⚙️ Installation
-
-We highly recommend using Conda to manage a clean virtual environment. You can easily set it up using the provided `environment.yaml` file:
+## Installation
 
 ```bash
+git clone https://github.com/Yujin-Wu-xtu/DeBERTa-LoRA.git
+cd DeBERTa-LoRA
 conda env create -f environment.yaml
-conda activate your_env_name
+conda activate stego_env
+```
 
-🏋️ Training
+Run the commands below from the repository root. The scripts default to `microsoft/deberta-v3-large`; the tokenizer and pretrained model are downloaded on first use unless already cached. A CUDA-capable GPU is recommended for training.
 
-Train a model on one domain and one algorithm:
+## Training
 
-python train.py --train_domain Movie --algorithm AC
+Train on one domain–algorithm pair, selecting the checkpoint with the highest validation accuracy:
 
-Example:
-
-python train.py --train_domain News --algorithm VS
-
-To enable cross-domain evaluation after training:
-
-python train.py --train_domain Twitter --algorithm DI --cross_domain
-Optional arguments
+```bash
 python train.py \
   --train_domain Movie \
   --algorithm AC \
   --model_name microsoft/deberta-v3-large \
-  --batch_size 4 \
-  --epochs 5 \
+  --batch_size 12 \
+  --epochs 10 \
   --learning_rate 5e-5 \
+  --lora_r 64 \
+  --lora_alpha 128 \
+  --lora_dropout 0.1 \
   --output_dir outputs
-Quick smoke test
+```
+
+This saves the checkpoint to `outputs/AC_Movie/best_model.pt` and training logs to `outputs/AC_Movie/train.log`, then evaluates the selected checkpoint on the in-domain test split. Add `--cross_domain` to also evaluate it on all three domains for the same algorithm; the source-domain result is included in these logs.
+
+### Manuscript settings and current script defaults
+
+| Setting | Submitted manuscript | Current training script default |
+| --- | --- | --- |
+| LoRA rank / alpha | 64 / 128 | 64 / 128 |
+| LoRA dropout | 0.1 | 0.4 |
+| Maximum input length | 512 tokens | 512 tokens |
+| Epochs | 10 | 5 |
+| Batch size | 12 | 4 |
+| Optimizer / learning rate | AdamW / 5e-5 | AdamW / 5e-5 |
+| Scheduler | Linear, 3 warm-up steps | Linear, 10% of total training steps as warm-up |
+| Checkpoint selection | Highest validation ACC | Highest validation ACC |
+
+The command above explicitly sets the manuscript's exposed training parameters. **The released script still uses a 10% warm-up schedule and has no command-line option for the manuscript's 3 warm-up steps**, so the command alone does not reproduce every reported setting. The released classifier uses two output logits with cross-entropy; the manuscript formulates binary classification with a sigmoid and binary cross-entropy.
+
+For a small smoke run using a separate output directory:
+
+```bash
 python train.py \
   --train_domain Movie \
   --algorithm AC \
+  --epochs 1 \
+  --batch_size 4 \
+  --lora_dropout 0.1 \
   --max_train_samples 200 \
   --max_dev_samples 100 \
-  --max_test_samples 100
-🧪 Evaluation
+  --max_test_samples 100 \
+  --output_dir outputs/smoke
+```
 
-Evaluate a saved checkpoint:
+## Evaluation
 
+Evaluate the checkpoint trained above:
+
+```bash
 python test.py \
   --domain Movie \
   --algorithm AC \
-  --checkpoint outputs/AC_Movie/best_model.pt
+  --checkpoint outputs/AC_Movie/best_model.pt \
+  --lora_dropout 0.1
+```
 
-Evaluate on another split:
+Use the same model name, LoRA rank, and LoRA alpha as during training. `--split` defaults to `test`; use `--split dev` for validation data. Metrics, a classification report, and logs are saved as `metrics.json`, `classification_report.txt`, and `test.log` under `outputs/test_AC_Movie/`.
 
+For cross-domain evaluation, select the target domain while retaining the source checkpoint. For example, Movie → News on AC:
+
+```bash
 python test.py \
   --domain News \
-  --algorithm VS \
-  --split dev \
-  --checkpoint outputs/VS_News/best_model.pt
-Test outputs
+  --algorithm AC \
+  --checkpoint outputs/AC_Movie/best_model.pt \
+  --lora_dropout 0.1 \
+  --output_dir outputs/cross_domain/Movie_to_News
+```
 
-The evaluation script saves:
+For cross-steganography evaluation on News, first train an AC–News checkpoint using the training command with `--train_domain News`, then evaluate it on DI–News:
 
-metrics.json
-classification_report.txt
-test.log
+```bash
+python test.py \
+  --domain News \
+  --algorithm DI \
+  --checkpoint outputs/AC_News/best_model.pt \
+  --lora_dropout 0.1 \
+  --output_dir outputs/cross_stego/AC_to_DI
+```
 
-under the corresponding output directory.
+Use a separate `--output_dir` for each transfer experiment to retain its evaluation files.
 
-📌 Notes
-This repository focuses on our method and our datasets.
-Baseline implementations are not bundled here.
-For reproducibility, all data paths in the released scripts are relative paths, making the code directly runnable after cloning the repository.
-📚 Citation
+## Citation
 
-If you find this repository useful, please cite our paper:
+The manuscript has been **submitted to ICASSP 2027**. Until publication details are available, please use this provisional manuscript citation:
 
-@article{deberta_lora_steganalysis,
-  title={Efficient Yet Effective: DeBERTa-LoRA for Linguistic Steganalysis},
-  author={...},
-  journal={IEEE Signal Processing Letters},
-  year={2026}
+```bibtex
+@unpublished{li2026taskaligned,
+  title  = {Task-Aligned Discriminative Encoders for Efficient Linguistic Steganalysis},
+  author = {Li, Yanchun and Wu, Yujin and Yang, Ming and Zhang, Hangtao and Shen, Dongsu and Zeng, Li},
+  year   = {2026},
+  note   = {Manuscript submitted to ICASSP 2027},
+  url    = {https://github.com/Yujin-Wu-xtu/DeBERTa-LoRA}
 }
-
-Please replace the citation with the final published version after acceptance.
+```
